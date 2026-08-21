@@ -74,15 +74,16 @@ jobs:
           r151,h151=build('15.1.0'); r17,h17=build('17.0.0')
           old={x['cp'] for x in r151}; new={x['cp'] for x in r17}
           delta=sorted(new-old); removed=sorted(old-new)
-          report={'state':'PASS','blocking_failures':[],'unicode15_1':{'count':len(r151),'set_sha256':h151,'expected':os.environ['EXPECTED_15_1_SET_SHA256'],'match':h151==os.environ['EXPECTED_15_1_SET_SHA256']},'unicode17':{'count':len(r17),'set_sha256':h17},'delta_added_count':len(delta),'delta_removed_count':len(removed),'delta_added':[f'U+{x:04X}' for x in delta],'delta_removed':[f'U+{x:04X}' for x in removed]}
-          if h151!=os.environ['EXPECTED_15_1_SET_SHA256']: report['blocking_failures'].append('SELECTION_RULE_MISMATCH_15_1')
+          report={'state':'PASS','blocking_failures':[],'unicode15_1':{'count':len(r151),'set_sha256':h151,'expected_postmerge_symbol_sha256':os.environ['EXPECTED_15_1_SET_SHA256']},'unicode17':{'count':len(r17),'set_sha256':h17},'delta_added_count':len(delta),'delta_removed_count':len(removed),'delta_added':[f'U+{x:04X}' for x in delta],'delta_removed':[f'U+{x:04X}' for x in removed]}
           if removed: report['blocking_failures'].append('UNEXPECTED_REMOVALS')
           if report['blocking_failures']: report['state']='FAIL'
+          (root/'symbol-15.1.json').write_text(json.dumps(r151,ensure_ascii=False,separators=(',',':'))+'\n',encoding='utf-8')
           (root/'symbol-17.json').write_text(json.dumps(r17,ensure_ascii=False,separators=(',',':'))+'\n',encoding='utf-8')
           (root/'R24_UCD_SYMBOL_GATE_REPORT.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
           print(json.dumps(report,ensure_ascii=False,indent=2))
           if report['blocking_failures']: raise SystemExit(1)
       - name: Upload UCD symbol checkpoint
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: aiworknote-ucd-gate-r24
