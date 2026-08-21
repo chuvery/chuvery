@@ -18,7 +18,19 @@ jobs:
         run: |
           import hashlib, json, os, pathlib, urllib.request
           root=pathlib.Path('ucd-gate-r24'); root.mkdir()
-          block_names=set(['Arrows','Block Elements','Box Drawing','Braille Patterns','CJK Symbols/Punctuation','Control Pictures','Currency Symbols','Dingbats','Enclosed Alphanumerics','Enclosed CJK','General Punctuation','Geometric Shapes','Geometric Shapes Extended','Halfwidth/Fullwidth Forms','Latin-1 Symbols','Letterlike Symbols','Mathematical Operators','Misc Math A','Misc Math B','Misc Symbols','Misc Symbols and Arrows','Misc Technical','Number Forms','Ornamental Dingbats','Small Form Variants','Superscripts/Subscripts','Supplemental Arrows A','Supplemental Arrows B','Supplemental Arrows C','Supplemental Math Operators','Supplemental Punctuation','Symbols for Legacy Computing','Vertical Forms'])
+          block_alias={
+            'Arrows':'Arrows','Block Elements':'Block Elements','Box Drawing':'Box Drawing','Braille Patterns':'Braille Patterns',
+            'CJK Symbols and Punctuation':'CJK Symbols/Punctuation','Control Pictures':'Control Pictures','Currency Symbols':'Currency Symbols',
+            'Dingbats':'Dingbats','Enclosed Alphanumerics':'Enclosed Alphanumerics','Enclosed CJK Letters and Months':'Enclosed CJK',
+            'General Punctuation':'General Punctuation','Geometric Shapes':'Geometric Shapes','Geometric Shapes Extended':'Geometric Shapes Extended',
+            'Halfwidth and Fullwidth Forms':'Halfwidth/Fullwidth Forms','Latin-1 Supplement':'Latin-1 Symbols','Letterlike Symbols':'Letterlike Symbols',
+            'Mathematical Operators':'Mathematical Operators','Miscellaneous Mathematical Symbols-A':'Misc Math A','Miscellaneous Mathematical Symbols-B':'Misc Math B',
+            'Miscellaneous Symbols':'Misc Symbols','Miscellaneous Symbols and Arrows':'Misc Symbols and Arrows','Miscellaneous Technical':'Misc Technical',
+            'Number Forms':'Number Forms','Ornamental Dingbats':'Ornamental Dingbats','Small Form Variants':'Small Form Variants',
+            'Superscripts and Subscripts':'Superscripts/Subscripts','Supplemental Arrows-A':'Supplemental Arrows A','Supplemental Arrows-B':'Supplemental Arrows B',
+            'Supplemental Arrows-C':'Supplemental Arrows C','Supplemental Mathematical Operators':'Supplemental Math Operators',
+            'Supplemental Punctuation':'Supplemental Punctuation','Symbols for Legacy Computing':'Symbols for Legacy Computing','Vertical Forms':'Vertical Forms'
+          }
           def fetch(ver,name):
             url=f'https://www.unicode.org/Public/{ver}/ucd/{name}'
             data=urllib.request.urlopen(url,timeout=60).read(); (root/f'{ver}-{name}').write_bytes(data)
@@ -47,13 +59,14 @@ jobs:
           def build(ver):
             udtxt=fetch(ver,'UnicodeData.txt'); bltxt=fetch(ver,'Blocks.txt')
             ud=udata(udtxt); bl=blocks(bltxt); rec=[]
-            for a,b,bn in bl:
-              if bn not in block_names: continue
+            for a,b,official_bn in bl:
+              if official_bn not in block_alias: continue
+              bn=block_alias[official_bn]
               for cp in range(a,b+1):
                 if cp not in ud: continue
                 name,cat=ud[cp]
                 if cat.startswith('P') or cat.startswith('S') or cat=='No':
-                  rec.append({'cp':cp,'value':chr(cp),'name':name,'category':cat,'block':bn})
+                  rec.append({'cp':cp,'value':chr(cp),'name':name,'category':cat,'block':bn,'official_block':official_bn})
             rec.sort(key=lambda x:x['cp'])
             vals=sorted(x['value'] for x in rec)
             sh=hashlib.sha256('\n'.join(vals).encode('utf-8')).hexdigest()
