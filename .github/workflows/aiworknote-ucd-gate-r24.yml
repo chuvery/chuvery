@@ -1,0 +1,78 @@
+name: AIWORKNOTE UCD symbol gate R24
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ucd-symbol-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch UCD 15.1 and 17.0 and rebuild bounded symbol set
+        shell: python
+        env:
+          EXPECTED_15_1_SET_SHA256: 878ee0da17073421d85574b4b9cb430a5f3d21f42d8ab7cf76179ea58e26378f
+        run: |
+          import hashlib, json, os, pathlib, urllib.request
+          root=pathlib.Path('ucd-gate-r24'); root.mkdir()
+          block_names=set(['Arrows','Block Elements','Box Drawing','Braille Patterns','CJK Symbols/Punctuation','Control Pictures','Currency Symbols','Dingbats','Enclosed Alphanumerics','Enclosed CJK','General Punctuation','Geometric Shapes','Geometric Shapes Extended','Halfwidth/Fullwidth Forms','Latin-1 Symbols','Letterlike Symbols','Mathematical Operators','Misc Math A','Misc Math B','Misc Symbols','Misc Symbols and Arrows','Misc Technical','Number Forms','Ornamental Dingbats','Small Form Variants','Superscripts/Subscripts','Supplemental Arrows A','Supplemental Arrows B','Supplemental Arrows C','Supplemental Math Operators','Supplemental Punctuation','Symbols for Legacy Computing','Vertical Forms'])
+          def fetch(ver,name):
+            url=f'https://www.unicode.org/Public/{ver}/ucd/{name}'
+            data=urllib.request.urlopen(url,timeout=60).read(); (root/f'{ver}-{name}').write_bytes(data)
+            return data.decode('utf-8')
+          def blocks(text):
+            out=[]
+            for line in text.splitlines():
+              line=line.split('#',1)[0].strip()
+              if not line: continue
+              rg,n=[x.strip() for x in line.split(';',1)]
+              a,b=[int(x,16) for x in rg.split('..')]
+              out.append((a,b,n))
+            return out
+          def udata(text):
+            d={}; pending=None
+            for line in text.splitlines():
+              f=line.split(';'); cp=int(f[0],16); name=f[1]; cat=f[2]
+              if name.endswith(', First>'):
+                pending=(cp,name,cat); continue
+              if name.endswith(', Last>') and pending:
+                a,pname,pcat=pending
+                for x in range(a,cp+1): d[x]=(pname.replace(', First>','>'),pcat)
+                pending=None; continue
+              d[cp]=(name,cat)
+            return d
+          def build(ver):
+            udtxt=fetch(ver,'UnicodeData.txt'); bltxt=fetch(ver,'Blocks.txt')
+            ud=udata(udtxt); bl=blocks(bltxt); rec=[]
+            for a,b,bn in bl:
+              if bn not in block_names: continue
+              for cp in range(a,b+1):
+                if cp not in ud: continue
+                name,cat=ud[cp]
+                if cat.startswith('P') or cat.startswith('S') or cat=='No':
+                  rec.append({'cp':cp,'value':chr(cp),'name':name,'category':cat,'block':bn})
+            rec.sort(key=lambda x:x['cp'])
+            vals=sorted(x['value'] for x in rec)
+            sh=hashlib.sha256('\n'.join(vals).encode('utf-8')).hexdigest()
+            return rec,sh
+          r151,h151=build('15.1.0'); r17,h17=build('17.0.0')
+          old={x['cp'] for x in r151}; new={x['cp'] for x in r17}
+          delta=sorted(new-old); removed=sorted(old-new)
+          report={'state':'PASS','blocking_failures':[],'unicode15_1':{'count':len(r151),'set_sha256':h151,'expected':os.environ['EXPECTED_15_1_SET_SHA256'],'match':h151==os.environ['EXPECTED_15_1_SET_SHA256']},'unicode17':{'count':len(r17),'set_sha256':h17},'delta_added_count':len(delta),'delta_removed_count':len(removed),'delta_added':[f'U+{x:04X}' for x in delta],'delta_removed':[f'U+{x:04X}' for x in removed]}
+          if h151!=os.environ['EXPECTED_15_1_SET_SHA256']: report['blocking_failures'].append('SELECTION_RULE_MISMATCH_15_1')
+          if removed: report['blocking_failures'].append('UNEXPECTED_REMOVALS')
+          if report['blocking_failures']: report['state']='FAIL'
+          (root/'symbol-17.json').write_text(json.dumps(r17,ensure_ascii=False,separators=(',',':'))+'\n',encoding='utf-8')
+          (root/'R24_UCD_SYMBOL_GATE_REPORT.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps(report,ensure_ascii=False,indent=2))
+          if report['blocking_failures']: raise SystemExit(1)
+      - name: Upload UCD symbol checkpoint
+        uses: actions/upload-artifact@v4
+        with:
+          name: aiworknote-ucd-gate-r24
+          path: ucd-gate-r24/
+          if-no-files-found: error
+          retention-days: 7
