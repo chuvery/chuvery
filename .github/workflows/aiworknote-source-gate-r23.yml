@@ -1,0 +1,64 @@
+name: AIWORKNOTE source gate R23
+on:
+  push:
+    branches: [aiworknote-source-gate-r23h]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch authoritative sources and verify
+        shell: python
+        env:
+          EXPECTED_EMOJI_SET_SHA256: e59a1ad6cad887d2c1ac15cb04859ec50aad8b0c1ef53d9714a586bd5c2ff400
+        run: |
+          import hashlib, json, os, pathlib, re, urllib.request, subprocess
+          root=pathlib.Path('source-gate-r23'); root.mkdir()
+          sources={
+            'emoji-test.txt':('https://raw.githubusercontent.com/unicode-org/unicodetools/main/unicodetools/data/emoji/17.0/emoji-test.txt','e42fdef494399d2a05b9b75930a3231fe81b2436'),
+            'emoji-sequences.txt':('https://raw.githubusercontent.com/unicode-org/unicodetools/main/unicodetools/data/emoji/17.0/emoji-sequences.txt','5457b28db166e14ff22a59911217f1c895ac92bc'),
+            'emoji-zwj-sequences.txt':('https://raw.githubusercontent.com/unicode-org/unicodetools/main/unicodetools/data/emoji/17.0/emoji-zwj-sequences.txt','0259b8ec0aaf37dee0f5a610701cf3e67f2637bd'),
+            'cldr-ko.xml':('https://raw.githubusercontent.com/unicode-org/cldr/release-48-2/common/annotations/ko.xml','c82c24590d56a4bb0bbe5ec1139c1834bea84f03'),
+            'cldr-derived-ko.xml':('https://raw.githubusercontent.com/unicode-org/cldr/release-48-2/common/annotationsDerived/ko.xml','e52520ec1373682fddc03c8177a4620bd736ca3f'),
+          }
+          report={'sources':{},'emoji_set':{},'blocking_failures':[]}
+          for name,(url,expected_git_sha) in sources.items():
+            data=urllib.request.urlopen(url,timeout=60).read()
+            path=root/name; path.write_bytes(data)
+            actual_git=subprocess.check_output(['git','hash-object',str(path)],text=True).strip()
+            sha256=hashlib.sha256(data).hexdigest()
+            ok=actual_git==expected_git_sha
+            report['sources'][name]={'bytes':len(data),'sha256':sha256,'git_blob_sha':actual_git,'expected_git_blob_sha':expected_git_sha,'git_blob_match':ok}
+            if not ok: report['blocking_failures'].append('GIT_BLOB_MISMATCH:'+name)
+          text=(root/'emoji-test.txt').read_text(encoding='utf-8')
+          vals=[]
+          status_counts={}
+          for line in text.splitlines():
+            if ';' not in line or line.lstrip().startswith('#'): continue
+            left,right=line.split(';',1)
+            status=right.split('#',1)[0].strip()
+            if status not in ('fully-qualified','component'): continue
+            cps=[int(x,16) for x in left.strip().split()]
+            vals.append(''.join(chr(cp) for cp in cps))
+            status_counts[status]=status_counts.get(status,0)+1
+          uniq=sorted(set(vals))
+          canon='\n'.join(uniq).encode('utf-8')
+          set_hash=hashlib.sha256(canon).hexdigest()
+          report['emoji_set']={'count':len(uniq),'status_counts':status_counts,'sorted_set_sha256':set_hash,'expected_sorted_set_sha256':os.environ['EXPECTED_EMOJI_SET_SHA256'],'match':set_hash==os.environ['EXPECTED_EMOJI_SET_SHA256']}
+          if len(uniq)!=3953: report['blocking_failures'].append('EMOJI_COUNT:'+str(len(uniq)))
+          if set_hash!=os.environ['EXPECTED_EMOJI_SET_SHA256']: report['blocking_failures'].append('EMOJI_SET_HASH_MISMATCH')
+          report['state']='PASS' if not report['blocking_failures'] else 'FAIL'
+          (root/'R23_SOURCE_GATE_REPORT.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps(report,ensure_ascii=False,indent=2))
+          if report['blocking_failures']: raise SystemExit(1)
+      - name: Upload authoritative byte checkpoint
+        uses: actions/upload-artifact@v4
+        with:
+          name: aiworknote-source-gate-r23
+          path: source-gate-r23/
+          if-no-files-found: error
+          retention-days: 7
