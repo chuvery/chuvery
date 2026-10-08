@@ -46,3 +46,5 @@ a:focus-visible,summary:focus-visible,button:focus-visible,input:focus-visible,t
 .policy p,.policy li{color:var(--muted);font-size:15px;line-height:1.85}
 .policy ul{padding-left:20px}
 .policy .effective{margin-top:30px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+
+img{height:auto}
