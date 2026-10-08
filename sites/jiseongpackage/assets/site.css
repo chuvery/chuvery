@@ -48,3 +48,8 @@ a:focus-visible,summary:focus-visible,button:focus-visible,input:focus-visible,t
 .policy .effective{margin-top:30px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
 
 img{height:auto}
+
+/* Bounded mobile accessibility: minimum menu target and narrow reflow */
+.mobile-menu summary{min-height:44px;display:flex;align-items:center;justify-content:center}
+.mobile-menu nav a{min-height:44px;display:flex;align-items:center}
+@media(max-width:360px){.container{width:calc(100% - 32px)}.hero h1{font-size:clamp(32px,10vw,40px)}.contact-item a,.contact-item strong{overflow-wrap:anywhere}.site-header .header-row{gap:10px}}
