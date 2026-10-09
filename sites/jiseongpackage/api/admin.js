@@ -37,6 +37,7 @@ export default async function handler(req,res){
  const q=b.id?await query('jp_popups?id=eq.'+encodeURIComponent(b.id),token,{method:'PATCH',body:data}):await query('jp_popups',token,{method:'POST',body:data});
  return send(res,q.status<300?200:502,q.status<300?{item:q.data?.[0]}:{error:'저장 실패'});
  }
+ if(op==='popup-delete'&&method==='POST'){const id=req.body?.id;if(typeof id!=='string'||!/^[0-9a-f-]{36}$/i.test(id))return send(res,400,{error:'ID 오류'});const r=await query('jp_popups?id=eq.'+encodeURIComponent(id),token,{method:'DELETE'});return send(res,r.status<300?200:502,{ok:r.status<300});}
  if(op==='me'&&method==='GET')return send(res,200,{admin:true});
  if(op==='list'&&method==='GET'){const r=await query('jp_notices?select=id,title,body,is_published,created_at&order=created_at.desc&limit=100',token);return send(res,r.status===200?200:502,r.status===200?{items:r.data}:{error:'목록 조회 실패'})}
  if(op==='save'&&method==='POST'){
