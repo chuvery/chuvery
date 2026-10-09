@@ -53,3 +53,6 @@ img{height:auto}
 .mobile-menu summary{min-height:44px;display:flex;align-items:center;justify-content:center}
 .mobile-menu nav a{min-height:44px;display:flex;align-items:center}
 @media(max-width:360px){.container{width:calc(100% - 32px)}.hero h1{font-size:clamp(32px,10vw,40px)}.contact-item a,.contact-item strong{overflow-wrap:anywhere}.site-header .header-row{gap:10px}}
+
+/* Mobile QA follow-up: accessible footer touch targets */
+.footer-links a{display:inline-flex;align-items:center;min-height:44px;padding:8px 2px}
