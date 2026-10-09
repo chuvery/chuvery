@@ -26,6 +26,17 @@ export default async function handler(req,res){
  if(op==='popup-public'&&method==='GET'){const r=await query('jp_popups?select=id,title,image_url,notice_id,starts_at,ends_at&is_enabled=eq.true&starts_at=lte.'+encodeURIComponent(new Date().toISOString())+'&ends_at=gt.'+encodeURIComponent(new Date().toISOString())+'&limit=1',key);return send(res,r.status===200?200:502,r.status===200?{items:r.data}:{error:'팝업 조회 실패'});}
  const token=await session(req);if(!token||!(await isAdmin(token)))return send(res,401,{error:'관리자 로그인이 필요합니다'});
  if(op==='popup-list'&&method==='GET'){const r=await query('jp_popups?select=id,title,image_url,notice_id,starts_at,ends_at,is_enabled&order=created_at.desc&limit=30',token);return send(res,r.status===200?200:502,r.status===200?{items:r.data}:{error:'팝업 목록 실패'});}
+ if(op==='popup-save'&&method==='POST'){
+ const b=req.body||{};const title=String(b.title||'').trim(),img=String(b.image_url||'').trim();
+ if(!title||title.length>120||!/^\/assets\/[a-zA-Z0-9/_-]+\.(png|jpg|jpeg|webp)$/.test(img))return send(res,400,{error:'팝업 정보 오류'});
+ const start=new Date(b.starts_at),end=new Date(b.ends_at);
+ if(!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())||end<=start)return send(res,400,{error:'기간 오류'});
+ if(b.id&&!/^[0-9a-f-]{36}$/i.test(b.id))return send(res,400,{error:'ID 오류'});
+ if(b.notice_id&&!/^[0-9a-f-]{36}$/i.test(b.notice_id))return send(res,400,{error:'공지 ID 오류'});
+ const data={title,image_url:img,starts_at:start.toISOString(),ends_at:end.toISOString(),notice_id:b.notice_id||null,is_enabled:b.is_enabled===true};
+ const q=b.id?await query('jp_popups?id=eq.'+encodeURIComponent(b.id),token,{method:'PATCH',body:data}):await query('jp_popups',token,{method:'POST',body:data});
+ return send(res,q.status<300?200:502,q.status<300?{item:q.data?.[0]}:{error:'저장 실패'});
+ }
  if(op==='me'&&method==='GET')return send(res,200,{admin:true});
  if(op==='list'&&method==='GET'){const r=await query('jp_notices?select=id,title,body,is_published,created_at&order=created_at.desc&limit=100',token);return send(res,r.status===200?200:502,r.status===200?{items:r.data}:{error:'목록 조회 실패'})}
  if(op==='save'&&method==='POST'){
