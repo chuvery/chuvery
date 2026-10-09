@@ -56,3 +56,10 @@ img{height:auto}
 
 /* Mobile QA follow-up: accessible footer touch targets */
 .footer-links a{display:inline-flex;align-items:center;min-height:44px;padding:8px 2px}
+
+/* PHASE A visitor path links: visible, accessible, and clear of sticky header */
+.problem p a,.product-help a,.product-journey-link a,.rep a{display:inline-flex;align-items:center;min-height:44px;color:var(--brand-deep);font-weight:800;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}
+.problem p a:hover,.product-help a:hover,.product-journey-link a:hover,.rep a:hover{text-decoration-thickness:2px}
+.product-help,.product-journey-link{margin:14px 0 22px;color:var(--muted);font-size:14px;line-height:1.8}
+.product-journey-link{margin:20px 0 0}
+#custom-development{scroll-margin-top:90px}
