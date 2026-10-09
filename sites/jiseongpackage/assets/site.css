@@ -63,3 +63,7 @@ img{height:auto}
 .product-help,.product-journey-link{margin:14px 0 22px;color:var(--muted);font-size:14px;line-height:1.8}
 .product-journey-link{margin:20px 0 0}
 #custom-development{scroll-margin-top:90px}
+
+/* Direct contact links in shared footer */
+.footer-info a{color:inherit;text-decoration:underline;text-decoration-color:rgba(255,255,255,.4);text-underline-offset:3px;overflow-wrap:anywhere;display:inline-flex;align-items:center;min-height:44px}
+.footer-info a:hover,.footer-info a:focus-visible{color:#fff;text-decoration-color:#fff}
