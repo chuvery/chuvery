@@ -25,6 +25,7 @@ export default async function handler(req,res){
  }
  if(op==='popup-public'&&method==='GET'){const r=await query('jp_popups?select=id,title,image_url,notice_id,starts_at,ends_at&is_enabled=eq.true&starts_at=lte.'+encodeURIComponent(new Date().toISOString())+'&ends_at=gt.'+encodeURIComponent(new Date().toISOString())+'&limit=1',key);return send(res,r.status===200?200:502,r.status===200?{items:r.data}:{error:'팝업 조회 실패'});}
  const token=await session(req);if(!token||!(await isAdmin(token)))return send(res,401,{error:'관리자 로그인이 필요합니다'});
+ if(op==='popup-list'&&method==='GET'){const r=await query('jp_popups?select=id,title,image_url,notice_id,starts_at,ends_at,is_enabled&order=created_at.desc&limit=30',token);return send(res,r.status===200?200:502,r.status===200?{items:r.data}:{error:'팝업 목록 실패'});}
  if(op==='me'&&method==='GET')return send(res,200,{admin:true});
  if(op==='list'&&method==='GET'){const r=await query('jp_notices?select=id,title,body,is_published,created_at&order=created_at.desc&limit=100',token);return send(res,r.status===200?200:502,r.status===200?{items:r.data}:{error:'목록 조회 실패'})}
  if(op==='save'&&method==='POST'){
