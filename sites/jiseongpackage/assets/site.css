@@ -79,3 +79,5 @@ img{height:auto}
 
 .notice-popup [data-popup-image],.notice-detail-image{display:block;max-width:100%;height:auto;max-height:65vh;object-fit:contain;margin:12px auto;border-radius:8px}
 .notice-popup [data-popup-image][hidden]{display:none}
+
+.notice-admin-entry{display:flex;justify-content:flex-end;margin-top:18px}.notice-admin-entry a{display:inline-flex;align-items:center;min-height:44px;padding:8px 4px;color:var(--muted);font-size:13px;text-decoration:underline;text-underline-offset:3px}.notice-admin-entry a:hover,.notice-admin-entry a:focus-visible{color:var(--brand-deep)}
