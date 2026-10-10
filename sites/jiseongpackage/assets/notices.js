@@ -5,7 +5,7 @@ if(list){
  const make=(tag,value)=>{const el=document.createElement(tag);el.textContent=String(value??'');return el};
  const fallback=()=>{if(id){list.replaceChildren(make('p','공지사항을 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.'));}/* Keep the existing static notice if the list service is unavailable. */};
  const run=async()=>{
-  if(id!==null&&!/^[1-9][0-9]{0,15}$/.test(id)){list.replaceChildren(make('p','잘못된 공지사항 주소입니다.'));return}
+  if(id!==null&&!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id)){list.replaceChildren(make('p','잘못된 공지사항 주소입니다.'));return}
   const url=id!==null?'/api/notices?id='+encodeURIComponent(id):'/api/notices';
   const response=await fetch(url,{headers:{Accept:'application/json'},credentials:'omit'});
   if(response.status===404&&id!==null){list.replaceChildren(make('p','존재하지 않거나 공개되지 않은 공지사항입니다.'));return}
