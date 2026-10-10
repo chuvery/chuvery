@@ -1,4 +1,4 @@
-import { get, list, put } from '@vercel/blob';
+import { get, list, put, del } from '@vercel/blob';
 import { randomUUID } from 'node:crypto';
 
 // Immutable journal: no shared JSON index and no overwrite races.
@@ -111,4 +111,32 @@ export async function getNoticeImage(id){
  const obj=await get(row.image_key,{access,useCache:false});
  if(!obj||obj.statusCode!==200)return null;
  return {stream:obj.stream,contentType:row.image_key.endsWith('.png')?'image/png':row.image_key.endsWith('.webp')?'image/webp':'image/jpeg'};
+}
+
+export async function imageStorageReport(){
+ if(!enabled())throw new Error('blob_not_configured');
+ const rows=await notices();
+ const referenced=new Set(rows.map(r=>r.image_key).filter(Boolean));
+ let cursor,files=[];
+ do{
+  const page=await list({prefix:'jiseong/images/v1/',cursor,limit:1000,access});
+  files.push(...page.blobs);
+  cursor=page.hasMore?page.cursor:undefined;
+ }while(cursor);
+ const now=Date.now();
+ const candidates=files.filter(f=>!referenced.has(f.pathname)&&Number.isFinite(new Date(f.uploadedAt).getTime())&&now-new Date(f.uploadedAt).getTime()>48*60*60*1000);
+ return {objects:files.length,bytes:files.reduce((n,f)=>n+Number(f.size||0),0),referenced:files.filter(f=>referenced.has(f.pathname)).length,cleanup_candidates:candidates.length,candidate_paths:candidates.map(f=>f.pathname)};
+}
+export async function cleanupOrphanImages(){
+ const check=await imageStorageReport();
+ // Re-read state immediately before deletion, and remove only two-day-old unused objects.
+ const fresh=await notices();
+ const used=new Set(fresh.map(x=>x.image_key).filter(Boolean));
+ let deleted=0;
+ for(const pathname of check.candidate_paths.slice(0,10)){
+  if(used.has(pathname))continue;
+  await del(pathname,{access:'private'});
+  deleted++;
+ }
+ return {deleted,remaining_estimate:Math.max(0,check.cleanup_candidates-deleted)};
 }
