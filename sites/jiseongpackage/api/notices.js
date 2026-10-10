@@ -6,7 +6,7 @@ export default async function handler(req,res){
  if(req.method!=='GET'){res.statusCode=405;return res.end(JSON.stringify({error:'method'}));}
  if(!isStorageEnabled()){res.statusCode=503;return res.end(JSON.stringify({error:'not_configured'}));}
  try{
-  const rows=(await notices({publishedOnly:true})).map(({id,title,body,created_at})=>({id,title,body,created_at}));
+  const rows=(await notices({publishedOnly:true})).map(({id,title,body,created_at,image_key})=>({id,title,body,created_at,has_image:!!image_key}));
   const id=req.query?.id;
   if(id!==undefined){
    if(typeof id!=='string'||!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id)){res.statusCode=400;return res.end(JSON.stringify({error:'id'}));}
