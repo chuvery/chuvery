@@ -87,6 +87,19 @@ export async function uploadNoticeImage(raw,contentType){
  else if(contentType==='image/jpeg'&&data[0]===255&&data[1]===216&&data[2]===255&&data[data.length-2]===255&&data[data.length-1]===217)ext='jpg';
  else if(contentType==='image/webp'&&data.toString('ascii',0,4)==='RIFF'&&data.toString('ascii',8,12)==='WEBP')ext='webp';
  else return {status:415,error:'invalid_image_format'};
+ // Hard storage guard, not a billing guarantee: 100 total files and 10 uploads per KST day.
+ // Count current image blobs, including unattached files, before permitting uploads.
+ let cursor, count=0, todayCount=0;
+ const today=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Seoul'});
+ do{
+  const page=await list({prefix:'jiseong/images/v1/',cursor,limit:1000,access});
+  for(const file of page.blobs){
+   count++;
+   if(file.uploadedAt && new Date(file.uploadedAt).toLocaleDateString('en-CA',{timeZone:'Asia/Seoul'})===today)todayCount++;
+  }
+  if(count>=100||todayCount>=10)return {status:429,error:'image_upload_limit'};
+  cursor=page.hasMore?page.cursor:undefined;
+ }while(cursor);
  const imageKey='jiseong/images/v1/'+randomUUID()+'.'+ext;
  await put(imageKey,data,{access,addRandomSuffix:false,contentType,cacheControlMaxAge:60});
  return {status:200,image_key:imageKey};
