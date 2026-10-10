@@ -1,4 +1,4 @@
-import { notices, mutate, isStorageEnabled } from './_notice-store.js';
+import { notices, mutate, isStorageEnabled, uploadNoticeImage } from './_notice-store.js';
 import { randomBytes, scryptSync, timingSafeEqual, createHmac } from 'node:crypto';
 
 const COOKIE='js_admin';
@@ -15,7 +15,7 @@ function valid(req,key){
  try{const x=JSON.parse(Buffer.from(payload,'base64url').toString());return x.role==='admin'&&Number.isFinite(x.exp)&&Date.now()<x.exp;}catch{return false;}
 }
 function originOK(req){const host=req.headers['x-forwarded-host']||req.headers.host;const origin=req.headers.origin;if(!origin||!host)return false;try{const u=new URL(origin);return u.protocol==='https:'&&u.host===host;}catch{return false;}}
-function parse(req){return new Promise((ok,bad)=>{let s='';req.on('data',c=>{s+=c;if(s.length>14000){bad(new Error('too_large'));req.destroy();}});req.on('end',()=>{try{ok(JSON.parse(s||'{}'));}catch{bad(new Error('invalid_json'));}});req.on('error',bad);});}
+function parse(req){return new Promise((ok,bad)=>{let s='';req.on('data',c=>{s+=c;if(s.length>1500000){bad(new Error('too_large'));req.destroy();}});req.on('end',()=>{try{ok(JSON.parse(s||'{}'));}catch{bad(new Error('invalid_json'));}});req.on('error',bad);});}
 export default async function handler(req,res){
  res.setHeader('X-Content-Type-Options','nosniff');
  if(!['GET','POST'].includes(req.method))return send(res,405,{error:'method'});
@@ -41,6 +41,7 @@ export default async function handler(req,res){
  if(!isStorageEnabled())return send(res,503,{error:'blob_not_configured'});
  try{
   if(action==='list')return send(res,200,{rows:await notices()});
+  if(action==='upload_image'){const result=await uploadNoticeImage(body.data,body.content_type);return send(res,result.status,result.status===200?result:{error:result.error});}
   if(['create','update','delete'].includes(action)){
    const out=await mutate(action,body);
    return send(res,out.status,out.status===200?out:{error:out.error});
