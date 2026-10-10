@@ -15,18 +15,18 @@ async function prepareImage(file){
   context.drawImage(bitmap,0,0,width,height);
   const make=(type,quality)=>new Promise(resolve=>canvas.toBlob(resolve,type,quality));
   // High quality first: never use low-quality iterative compression.
+  // Keep already-small originals intact; especially avoid damaging text and transparency.
+  if(file.size<=1024*1024)return file;
   const options=[];
-  if(file.type==='image/png')options.push([file.type,undefined]);
+  if(file.type==='image/png')options.push(['image/png',undefined]);
   options.push(['image/webp',0.92],['image/webp',0.86]);
   let selected=null;
   for(const [type,quality] of options){
    const blob=await make(type,quality);
    if(!blob||blob.type!==type)continue;
-   if(blob.size<=1024*1024 &&(!selected||blob.size<selected.size))selected=blob;
+   if(blob.size<=1024*1024){selected=blob;break;}
   }
-  // Original or resized original is safer for text-heavy artwork than forcing poor lossy quality.
-  if(file.size<=1024*1024&&(!selected||file.size<=selected.size*1.1))selected=file;
-  if(!selected||selected.size>1024*1024)throw Error('화질을 유지하면 1MB를 초과합니다. 이미지를 조금 줄여 다시 시도해 주세요.');
+  if(!selected)throw Error('화질을 유지하면 1MB를 초과합니다. 이미지를 조금 줄여 다시 시도해 주세요.');
   return selected;
  }finally{bitmap.close();}
 }
