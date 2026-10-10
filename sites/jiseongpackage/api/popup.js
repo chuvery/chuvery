@@ -9,6 +9,6 @@ export default async function handler(req,res){
   const day=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'});
   const rows=await notices({publishedOnly:true});
   const n=rows.find(x=>x.popup_enabled&&x.popup_start<=day&&x.popup_end>=day);
-  res.statusCode=200;return res.end(JSON.stringify({popup:n?{id:n.id,title:n.title,body:n.body.slice(0,280),day}:null}));
+  res.statusCode=200;return res.end(JSON.stringify({popup:n?{id:n.id,title:n.title,body:n.body.slice(0,280),has_image:!!n.image_key,day}:null}));
  }catch{res.statusCode=500;return res.end(JSON.stringify({error:'storage_unavailable'}));}
 }
