@@ -33,7 +33,7 @@ function current(events){
  const byId=new Map();
  for(const e of events){
   if(e.action==='delete')byId.delete(e.id);
-  else byId.set(e.id,{id:e.id,title:e.title,body:e.body,published:e.published,created_at:e.created_at,updated_at:e.at,revision:e.revision});
+  else byId.set(e.id,{id:e.id,title:e.title,body:e.body,published:e.published,created_at:e.created_at,updated_at:e.at,revision:e.revision,popup_enabled:!!e.popup_enabled,popup_start:e.popup_start||'',popup_end:e.popup_end||''});
  }
  return [...byId.values()].sort((a,b)=>b.created_at.localeCompare(a.created_at));
 }
@@ -63,7 +63,9 @@ export async function mutate(action,input){
   if(typeof input.title!=='string'||!input.title.trim()||input.title.length>160||
     typeof input.body!=='string'||!input.body.trim()||input.body.length>10000||
     typeof input.published!=='boolean')return {status:400,error:'validation'};
-  Object.assign(event,{title:input.title.trim(),body:input.body.trim(),published:input.published});
+  const popup=!!input.popup_enabled;const start=String(input.popup_start||''),end=String(input.popup_end||'');
+  if(popup&&(!input.published||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(start)||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(end)||start>end||!Number.isFinite(Date.parse(start+'T00:00:00Z'))||!Number.isFinite(Date.parse(end+'T00:00:00Z'))))return {status:400,error:'popup_validation'};
+  Object.assign(event,{title:input.title.trim(),body:input.body.trim(),published:input.published,popup_enabled:popup,popup_start:popup?start:'',popup_end:popup?end:''});
  }
  // Lexicographical order reflects server time. UUID breaks ties.
  const key=PREFIX+now.replace(/[-:.TZ]/g,'').padEnd(17,'0')+'-'+revision+'.json';
