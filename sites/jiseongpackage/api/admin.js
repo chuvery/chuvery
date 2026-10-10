@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { notices, mutate, isStorageEnabled } from './_notice-store.js';
 import { randomBytes, scryptSync, timingSafeEqual, createHmac } from 'node:crypto';
 
 const COOKIE='js_admin';
@@ -38,18 +38,14 @@ export default async function handler(req,res){
  }
  if(action==='logout'){res.setHeader('Set-Cookie',COOKIE+'=; HttpOnly; Secure; SameSite=Strict; Path=/api/admin; Max-Age=0');return send(res,200,{authenticated:false});}
  if(!valid(req,key))return send(res,401,{error:'unauthorized'});
- if(!process.env.JISEONG_PREVIEW_DATABASE_URL)return send(res,503,{error:'database_not_configured'});
+ if(!isStorageEnabled())return send(res,503,{error:'blob_not_configured'});
  try{
-  const sql=neon(process.env.JISEONG_PREVIEW_DATABASE_URL);
-  if(action==='list'){const rows=await sql`SELECT id,title,body,published,created_at,updated_at FROM admin_notices ORDER BY created_at DESC LIMIT 100`;return send(res,200,{rows});}
-  if(action==='create'||action==='update'){
-   const title=clean(body.title),content=clean(body.body);
-   if(!title||title.length>160||!content||content.length>10000||typeof body.published!=='boolean')return send(res,400,{error:'validation'});
-   if(action==='create'){const rows=await sql`INSERT INTO admin_notices(title,body,published) VALUES(${title},${content},${body.published}) RETURNING id`;return send(res,200,{id:rows[0].id});}
-   const id=Number(body.id);if(!Number.isSafeInteger(id)||id<1)return send(res,400,{error:'id'});
-   const rows=await sql`UPDATE admin_notices SET title=${title},body=${content},published=${body.published},updated_at=now() WHERE id=${id} RETURNING id`;return send(res,rows.length?200:404,rows.length?{id:rows[0].id}:{error:'not_found'});
+  if(action==='list')return send(res,200,{rows:await notices()});
+  if(['create','update','delete'].includes(action)){
+   const out=await mutate(action,body);
+   return send(res,out.status,out.status===200?out:{error:out.error});
   }
-  if(action==='delete'){const id=Number(body.id);if(!Number.isSafeInteger(id)||id<1)return send(res,400,{error:'id'});const rows=await sql`DELETE FROM admin_notices WHERE id=${id} RETURNING id`;return send(res,rows.length?200:404,rows.length?{deleted:true}:{error:'not_found'});}
   return send(res,400,{error:'unknown_action'});
- }catch{return send(res,500,{error:'storage_unavailable'});}
+ }catch(e){return send(res,e.message==='journal_capacity'?507:500,{error:'storage_unavailable'});}
+
 }
