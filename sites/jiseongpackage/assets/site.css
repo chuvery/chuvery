@@ -76,3 +76,6 @@ img{height:auto}
 .popup-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
 .popup-actions a,.popup-actions button{font:inherit;display:inline-flex;align-items:center;min-height:44px;padding:9px 12px;border:1px solid #afb7c1;border-radius:7px;background:#fff;color:#17202a;cursor:pointer}
 .popup-actions a{background:#123454;color:#fff;text-decoration:none}
+
+.notice-popup [data-popup-image],.notice-detail-image{display:block;max-width:100%;height:auto;max-height:65vh;object-fit:contain;margin:12px auto;border-radius:8px}
+.notice-popup [data-popup-image][hidden]{display:none}
