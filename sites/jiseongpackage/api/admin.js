@@ -1,4 +1,4 @@
-import { notices, mutate, isStorageEnabled, uploadNoticeImage } from './_notice-store.js';
+import { notices, mutate, isStorageEnabled, uploadNoticeImage, imageStorageReport, cleanupOrphanImages } from './_notice-store.js';
 import { randomBytes, scryptSync, timingSafeEqual, createHmac } from 'node:crypto';
 
 const COOKIE='js_admin';
@@ -41,6 +41,8 @@ export default async function handler(req,res){
  if(!isStorageEnabled())return send(res,503,{error:'blob_not_configured'});
  try{
   if(action==='list')return send(res,200,{rows:await notices()});
+  if(action==='image_report'){const r=await imageStorageReport();const {candidate_paths,...safe}=r;return send(res,200,safe);}
+  if(action==='image_cleanup')return send(res,200,await cleanupOrphanImages());
   if(action==='upload_image'){const result=await uploadNoticeImage(body.data,body.content_type);return send(res,result.status,result.status===200?result:{error:result.error});}
   if(['create','update','delete'].includes(action)){
    const out=await mutate(action,body);
