@@ -75,3 +75,26 @@ export async function mutate(action,input){
  return {status:200,id,revision,deleted:action==='delete'};
 }
 export const isStorageEnabled=enabled;
+
+export async function uploadNoticeImage(raw,contentType){
+ if(!enabled())throw new Error('blob_not_configured');
+ if(typeof raw!=='string'||raw.length>1450000||raw.length<20||!/^[A-Za-z0-9+/]+={0,2}$/.test(raw))return {status:400,error:'invalid_image'};
+ const data=Buffer.from(raw,'base64');
+ if(data.length<12||data.length>1024*1024)return {status:413,error:'image_size'};
+ let ext;
+ if(contentType==='image/png'&&data.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))ext='png';
+ else if(contentType==='image/jpeg'&&data[0]===255&&data[1]===216&&data[2]===255&&data[data.length-2]===255&&data[data.length-1]===217)ext='jpg';
+ else if(contentType==='image/webp'&&data.toString('ascii',0,4)==='RIFF'&&data.toString('ascii',8,12)==='WEBP')ext='webp';
+ else return {status:415,error:'invalid_image_format'};
+ const imageKey='jiseong/images/v1/'+randomUUID()+'.'+ext;
+ await put(imageKey,data,{access,addRandomSuffix:false,contentType,cacheControlMaxAge:60});
+ return {status:200,image_key:imageKey};
+}
+export async function getNoticeImage(id){
+ if(!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id))return null;
+ const row=(await notices({publishedOnly:true})).find(x=>x.id===id);
+ if(!row?.image_key)return null;
+ const obj=await get(row.image_key,{access,useCache:false});
+ if(!obj||obj.statusCode!==200)return null;
+ return {stream:obj.stream,contentType:row.image_key.endsWith('.png')?'image/png':row.image_key.endsWith('.webp')?'image/webp':'image/jpeg'};
+}
