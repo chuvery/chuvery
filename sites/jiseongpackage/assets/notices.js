@@ -18,7 +18,7 @@ if(list){
    const article=document.createElement('article');
    const h=make('h2',n.title),body=make('p',n.body),back=document.createElement('a');
    body.style.whiteSpace='pre-wrap';back.href='/notice';back.textContent='공지 목록으로';
-   article.append(h,body,back);list.append(article);return;
+   article.append(h);if(n.has_image){const pic=document.createElement('img');pic.src='/api/notice-image?id='+encodeURIComponent(n.id);pic.alt=n.title+' 관련 이미지';pic.loading='lazy';pic.className='notice-detail-image';article.append(pic);}article.append(body,back);list.append(article);return;
   }
   const rows=Array.isArray(result.rows)?result.rows:[];
   if(!rows.length){list.append(make('p','등록된 공지사항이 없습니다.'));return}
