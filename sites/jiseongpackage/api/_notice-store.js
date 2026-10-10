@@ -64,7 +64,8 @@ export async function mutate(action,input){
     typeof input.body!=='string'||!input.body.trim()||input.body.length>10000||
     typeof input.published!=='boolean')return {status:400,error:'validation'};
   const popup=!!input.popup_enabled;const start=String(input.popup_start||''),end=String(input.popup_end||'');
-  if(popup&&(!input.published||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(start)||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(end)||start>end||!Number.isFinite(Date.parse(start+'T00:00:00Z'))||!Number.isFinite(Date.parse(end+'T00:00:00Z'))))return {status:400,error:'popup_validation'};
+  const validDate=(value)=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;const time=Date.parse(value+'T00:00:00Z');return Number.isFinite(time)&&new Date(time).toISOString().slice(0,10)===value;};
+  if(popup&&(!input.published||!validDate(start)||!validDate(end)||start>end))return {status:400,error:'popup_validation'};
   const imageKey=String(input.image_key||'');
   if(imageKey&&!/^jiseong\/images\/v1\/[0-9a-f-]{36}\.(png|jpg|webp)$/.test(imageKey))return {status:400,error:'invalid_image'};
   Object.assign(event,{title:input.title.trim(),body:input.body.trim(),published:input.published,popup_enabled:popup,popup_start:popup?start:'',popup_end:popup?end:'',image_key:imageKey});
