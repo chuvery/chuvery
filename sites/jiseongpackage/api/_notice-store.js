@@ -11,7 +11,7 @@ const enabled=()=>Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 async function allEvents(){
  let cursor,files=[];
  do {
-  const page=await list({prefix:PREFIX,cursor,limit:1000});
+  const page=await list({prefix:PREFIX,cursor,limit:1000,access});
   files.push(...page.blobs);
   if(files.length>MAX_EVENTS)throw new Error('journal_capacity');
   cursor=page.hasMore?page.cursor:undefined;
