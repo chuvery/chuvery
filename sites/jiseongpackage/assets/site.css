@@ -67,3 +67,12 @@ img{height:auto}
 /* Direct contact links in shared footer */
 .footer-info a{color:inherit;text-decoration:underline;text-decoration-color:rgba(255,255,255,.4);text-underline-offset:3px;overflow-wrap:anywhere;display:inline-flex;align-items:center;min-height:44px}
 .footer-info a:hover,.footer-info a:focus-visible{color:#fff;text-decoration-color:#fff}
+
+/* Scheduled notice popup */
+.notice-popup{width:min(92vw,550px);max-height:80vh;border:1px solid #d3dae1;border-radius:16px;padding:26px;color:#17202a;box-shadow:0 15px 60px #0005}
+.notice-popup::backdrop{background:rgba(0,0,0,.55)}
+.notice-popup h2{margin:0 0 15px;font-size:24px;line-height:1.4}
+.notice-popup p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7}
+.popup-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.popup-actions a,.popup-actions button{font:inherit;display:inline-flex;align-items:center;min-height:44px;padding:9px 12px;border:1px solid #afb7c1;border-radius:7px;background:#fff;color:#17202a;cursor:pointer}
+.popup-actions a{background:#123454;color:#fff;text-decoration:none}
