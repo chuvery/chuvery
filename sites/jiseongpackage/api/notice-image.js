@@ -1,7 +1,7 @@
 import { getNoticeImage, isStorageEnabled } from './_notice-store.js';
 export default async function handler(req,res){
  res.setHeader('X-Content-Type-Options','nosniff');
- res.setHeader('Cache-Control','public, max-age=60');
+ res.setHeader('Cache-Control','no-store');
  if(req.method!=='GET'){res.statusCode=405;return res.end();}
  if(!isStorageEnabled()){res.statusCode=503;return res.end();}
  try{
