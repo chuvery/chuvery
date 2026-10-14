@@ -51,6 +51,7 @@ export default async function handler(req,res){
  if(req.method==='GET')return send(res,200,{authenticated:valid(req,key)});
  if(!originOK(req))return send(res,403,{error:'origin'});
  let body;try{body=await parse(req);}catch{return send(res,400,{error:'invalid_request'});}
+ if(!body||typeof body!=='object'||Array.isArray(body))return send(res,400,{error:'invalid_request'});
  const action=clean(body.action);
  if(action==='login'){
    const {ip,v}=loginBucket(req);
