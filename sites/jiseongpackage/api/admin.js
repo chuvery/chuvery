@@ -3,6 +3,31 @@ import { randomBytes, scryptSync, timingSafeEqual, createHmac } from 'node:crypt
 
 const COOKIE='js_admin';
 const TTL=60*60*4;
+// Defense in depth only: per-instance counters are not a distributed/global rate limit.
+const LOGIN_WINDOW_MS=15*60*1000;
+const LOGIN_MAX_ATTEMPTS=5;
+const LOGIN_BUCKET_LIMIT=500;
+const loginFailures=new Map();
+function clientIP(req){
+ const raw=req.headers['x-forwarded-for'];
+ const value=typeof raw==='string'?raw.split(',')[0].trim():'';
+ return value&&value.length<=64?value:'unknown';
+}
+function loginBucket(req){
+ const now=Date.now();
+ if(loginFailures.size>LOGIN_BUCKET_LIMIT){
+  for(const [ip,v] of loginFailures){if(v.until<=now)loginFailures.delete(ip);}
+  if(loginFailures.size>LOGIN_BUCKET_LIMIT)loginFailures.clear();
+ }
+ const ip=clientIP(req);
+ let v=loginFailures.get(ip);
+ if(v&&v.until<=now){loginFailures.delete(ip);v=undefined;}
+ return {ip,v};
+}
+function registerLoginFailure(ip,v){
+ const count=(v?.count||0)+1;
+ loginFailures.set(ip,{count,until:Date.now()+LOGIN_WINDOW_MS});
+}
 const send=(res,status,data)=>{res.statusCode=status;res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.end(JSON.stringify(data));};
 const b64=x=>Buffer.from(x).toString('base64url');
 const clean=x=>typeof x==='string'?x.trim():'';
@@ -28,10 +53,13 @@ export default async function handler(req,res){
  let body;try{body=await parse(req);}catch{return send(res,400,{error:'invalid_request'});}
  const action=clean(body.action);
  if(action==='login'){
+   const {ip,v}=loginBucket(req);
+   if(v&&v.count>=LOGIN_MAX_ATTEMPTS){res.setHeader('Retry-After',String(Math.max(1,Math.ceil((v.until-Date.now())/1000))));return send(res,429,{error:'too_many_login_attempts'});}
    const [salt,expected]=hash.split(':');let computed='';
    if(salt&&expected&&/^[0-9a-f]{32,128}$/i.test(expected)&&/^[0-9a-f]{32,128}$/i.test(salt)&&clean(body.password).length<=200)
     computed=scryptSync(String(body.password),Buffer.from(salt,'hex'),expected.length/2).toString('hex');
-   if(clean(body.username)!==username||!computed||!eq(computed,expected))return send(res,401,{error:'invalid_credentials'});
+   if(clean(body.username)!==username||!computed||!eq(computed,expected)){registerLoginFailure(ip,v);return send(res,401,{error:'invalid_credentials'});}
+   loginFailures.delete(ip);
    const payload=b64(JSON.stringify({role:'admin',exp:Date.now()+TTL*1000,nonce:randomBytes(16).toString('hex')}));
    res.setHeader('Set-Cookie',COOKIE+'='+payload+'.'+mac(payload,key)+'; HttpOnly; Secure; SameSite=Strict; Path=/api/admin; Max-Age='+TTL);
    return send(res,200,{authenticated:true});
