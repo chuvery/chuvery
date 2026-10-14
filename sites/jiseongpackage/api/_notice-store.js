@@ -68,6 +68,8 @@ export async function mutate(action,input){
   if(popup&&(!input.published||!validDate(start)||!validDate(end)||start>end))return {status:400,error:'popup_validation'};
   const imageKey=String(input.image_key||'');
   if(imageKey&&!/^jiseong\/images\/v1\/[0-9a-f-]{36}\.(png|jpg|webp)$/.test(imageKey))return {status:400,error:'invalid_image'};
+  // A syntactically valid name is insufficient: reject missing/deleted image objects.
+  if(imageKey){const image=await get(imageKey,{access,useCache:false});if(!image||image.statusCode!==200)return {status:400,error:'image_not_found'};if(image.stream?.cancel)await image.stream.cancel();}
   Object.assign(event,{title:input.title.trim(),body:input.body.trim(),published:input.published,popup_enabled:popup,popup_start:popup?start:'',popup_end:popup?end:'',image_key:imageKey});
  }
  // Lexicographical order reflects server time. UUID breaks ties.
