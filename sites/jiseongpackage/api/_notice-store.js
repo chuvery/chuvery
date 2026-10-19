@@ -18,14 +18,19 @@ async function allEvents(){
  }while(cursor);
  files.sort((a,b)=>a.pathname.localeCompare(b.pathname));
  const events=[];
- for(const file of files){
-  const obj=await get(file.pathname,{access,useCache:false});
-  if(!obj||obj.statusCode!==200)throw new Error('journal_missing');
-  const json=await new Response(obj.stream).text();
-  if(json.length>MAX_BYTES)throw new Error('journal_oversize');
-  const e=JSON.parse(json);
-  if(!e||typeof e.id!=='string'||typeof e.revision!=='string'||!['upsert','delete'].includes(e.action))throw new Error('journal_invalid');
-  events.push(e);
+ // Keep journal order, but do not incur one network round-trip per event.
+ // A bounded batch avoids overwhelming Blob when the journal grows.
+ for(let i=0;i<files.length;i+=12){
+  const batch=await Promise.all(files.slice(i,i+12).map(async file=>{
+   const obj=await get(file.pathname,{access,useCache:false});
+   if(!obj||obj.statusCode!==200)throw new Error('journal_missing');
+   const json=await new Response(obj.stream).text();
+   if(json.length>MAX_BYTES)throw new Error('journal_oversize');
+   const e=JSON.parse(json);
+   if(!e||typeof e.id!=='string'||typeof e.revision!=='string'||!['upsert','delete'].includes(e.action))throw new Error('journal_invalid');
+   return e;
+  }));
+  events.push(...batch);
  }
  return events;
 }
