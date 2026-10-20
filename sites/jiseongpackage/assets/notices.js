@@ -7,7 +7,7 @@ if(list){
  const run=async()=>{
   if(id!==null&&!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id)){list.replaceChildren(make('p','잘못된 공지사항 주소입니다.'));return}
   const url=id!==null?'/api/notices?id='+encodeURIComponent(id):'/api/notices';
-  const response=await fetch(url,{headers:{Accept:'application/json'},credentials:'omit'});
+  const response=await fetch(url,{headers:{Accept:'application/json'},credentials:'same-origin'});
   if(response.status===404&&id!==null){list.replaceChildren(make('p','존재하지 않거나 공개되지 않은 공지사항입니다.'));return}
   if(!response.ok)throw Error('unavailable');
   const result=await response.json();
