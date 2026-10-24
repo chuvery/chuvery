@@ -26,5 +26,5 @@ export default async function handler(req,res){
   }
   res.statusCode=200;
   return res.end(JSON.stringify({popup:{id:n.id,title:n.title,body:n.body.slice(0,280),has_image:!!image_data,image_data,day}}));
- }catch{res.statusCode=500;return res.end(JSON.stringify({error:'storage_unavailable'}));}
+ }catch(error){console.error('[jiseong-popup] request failed',{name:error?.name||'Error',code:typeof error?.code==='string'?error.code.slice(0,64):'unknown'});res.statusCode=500;return res.end(JSON.stringify({error:'storage_unavailable'}));}
 }
