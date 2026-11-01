@@ -27,7 +27,11 @@ if(list){
    const type=make('span','공지');type.className='type';
    const content=document.createElement('div'),h=document.createElement('h3'),a=make('a',n.title);
    a.href='/notice?id='+encodeURIComponent(n.id);h.append(a);content.append(h,make('p',String(n.body??'').slice(0,160)));
-   const date=make('time',String(n.created_at??'').slice(0,10));
+   const rawDate=String(n.created_at??'');
+   const parsedDate=new Date(rawDate);
+   const seoulDate=Number.isNaN(parsedDate.getTime())?rawDate.slice(0,10):new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(parsedDate);
+   const date=make('time',seoulDate);
+   if(!Number.isNaN(parsedDate.getTime()))date.dateTime=parsedDate.toISOString();
    article.append(type,content,date);list.append(article);
   }
  };
