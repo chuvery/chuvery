@@ -100,3 +100,7 @@ img{height:auto}
 
 /* Mobile hero section label: avoid a disproportionate two-line eyebrow. */
 @media(max-width:640px){.hero .eyebrow{font-size:11px;letter-spacing:.045em;line-height:1.5;max-width:100%;overflow-wrap:normal}}
+
+/* Container catalog and internal Harubang product details */
+.harubang-photo{margin:0}.harubang-photo img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:16px}.harubang-photo figcaption{margin-top:8px;color:var(--muted);font-size:13px}.harubang-detail h2{font-size:clamp(26px,3vw,36px);margin:0 0 18px;line-height:1.3}.harubang-detail h3{font-size:20px;margin:26px 0 8px}.harubang-detail>p{color:var(--muted);line-height:1.8}.harubang-detail .fact-list{margin:0}.container-product-img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;margin-bottom:16px}.rep a:not(.btn){display:inline-block;margin-top:12px;color:var(--brand-deep);font-weight:800;text-underline-offset:4px}.gallery figcaption a{color:inherit;text-decoration:underline;text-underline-offset:3px}.gallery figure>a{display:block}
+@media(max-width:640px){.harubang-photo img{aspect-ratio:1/1}.harubang-detail{min-width:0}.container-product-img{aspect-ratio:4/3}}
