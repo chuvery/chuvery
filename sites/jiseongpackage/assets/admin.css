@@ -35,3 +35,10 @@
 #save_result strong{display:block;font-size:17px;color:#175b3c}
 #save_result p{margin:6px 0;font-size:14px}
 #save_result a{display:inline-block;font-size:14px;font-weight:700;margin:4px 0;text-decoration:underline;text-underline-offset:3px}
+
+/* Notice list first, editor shown only when needed */
+#editor_panel[hidden],#popup_dates[hidden]{display:none!important}
+#notice_list_panel{scroll-margin-top:110px}#editor_panel{scroll-margin-top:105px}
+#new_notice{background:var(--brand);border-color:var(--brand);color:#fff}
+#notices article{gap:10px 12px}#notices article strong{min-width:0;overflow-wrap:anywhere}#notices article p{flex:1 1 100%;order:2;font-size:12px;color:var(--muted)}#notices article button{order:1}
+@media(max-width:600px){.admin-toolbar{justify-content:space-between}.admin-panel h2{line-height:1.4}#notices article strong{flex-basis:100%}}
