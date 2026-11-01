@@ -81,3 +81,15 @@ img{height:auto}
 .notice-popup [data-popup-image][hidden]{display:none}
 
 .notice-admin-entry{display:flex;justify-content:flex-end;margin-top:18px}.notice-admin-entry a{display:inline-flex;align-items:center;min-height:44px;padding:8px 4px;color:var(--muted);font-size:13px;text-decoration:underline;text-underline-offset:3px}.notice-admin-entry a:hover,.notice-admin-entry a:focus-visible{color:var(--brand-deep)}
+
+/* Narrow-screen editorial QA: let headings wrap at natural word boundaries.
+   Desktop editorial breaks remain unchanged. */
+@media(max-width:640px){
+ .hero h1,.section-head h2,.page-title h1,.prose h2{word-break:keep-all;overflow-wrap:break-word}
+ .hero h1 br,.section-head h2 br,.page-title h1 br,.prose h2 br{display:none}
+ .hero h1{font-size:clamp(30px,9vw,38px);line-height:1.18;letter-spacing:-.045em}
+ .section-head h2,.page-title h1{font-size:clamp(28px,8vw,34px);line-height:1.26}
+ .prose h2{font-size:clamp(25px,7.6vw,31px);line-height:1.3;word-break:keep-all}
+ .rep h3{font-size:clamp(23px,7vw,29px);line-height:1.3;word-break:keep-all;overflow-wrap:break-word}
+ .section-head p,.page-title p,.lead,.hero-point,.card p,.problem p{overflow-wrap:break-word;word-break:keep-all}
+}
