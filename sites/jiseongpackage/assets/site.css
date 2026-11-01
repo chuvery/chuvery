@@ -93,3 +93,7 @@ img{height:auto}
  .rep h3{font-size:clamp(23px,7vw,29px);line-height:1.3;word-break:keep-all;overflow-wrap:break-word}
  .section-head p,.page-title p,.lead,.hero-point,.card p,.problem p{overflow-wrap:break-word;word-break:keep-all}
 }
+
+/* Editorial eyebrow labels: prevent broad section paragraph styles enlarging them. */
+.section-head .eyebrow,.page-title .eyebrow{font-size:13px;line-height:1.4;letter-spacing:.09em;font-weight:900;color:var(--brand);margin:0 0 16px;max-width:none;overflow-wrap:normal;word-break:normal}
+@media(max-width:640px){.section-head .eyebrow,.page-title .eyebrow{font-size:11px;line-height:1.45;letter-spacing:.055em;margin-bottom:12px}}
