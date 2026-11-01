@@ -97,3 +97,6 @@ img{height:auto}
 /* Editorial eyebrow labels: prevent broad section paragraph styles enlarging them. */
 .section-head .eyebrow,.page-title .eyebrow{font-size:13px;line-height:1.4;letter-spacing:.09em;font-weight:900;color:var(--brand);margin:0 0 16px;max-width:none;overflow-wrap:normal;word-break:normal}
 @media(max-width:640px){.section-head .eyebrow,.page-title .eyebrow{font-size:11px;line-height:1.45;letter-spacing:.055em;margin-bottom:12px}}
+
+/* Mobile hero section label: avoid a disproportionate two-line eyebrow. */
+@media(max-width:640px){.hero .eyebrow{font-size:11px;letter-spacing:.045em;line-height:1.5;max-width:100%;overflow-wrap:normal}}
